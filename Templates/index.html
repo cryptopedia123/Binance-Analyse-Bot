@@ -1,0 +1,258 @@
+<html>
+    <head>
+        <title> Crypto Trading Bot</title>
+        <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+        <!-- This is the link for the lightweight chart we use, you can find all the details with this link -->
+        <!-- Github lightweight chart : https://github.com/tradingview/lightweight-charts -->
+
+    </head>
+
+
+
+    <body>
+
+        <h2>DASHBOARD</h2>
+
+        <h2>Custom Graph</h2>
+
+        
+        <!-- Here we want to design the user interface for the parameters
+        User should be able to 
+        (1) select the cryptocurrency pair from a dropdown
+        (2) select the kline frequency from a dropdown
+        (3) select the dates, maybe with a calender. Now he needs to type it manually
+        (4) select the hour in the GMT timezone, maybe with a clock. Now he needs to type it manually 
+        -->
+        <div id="Custom_graph">
+
+            <form action="/testcustom" method="post">
+                <select id="symbol_toppage" name="symbol_toppage">
+                    {% for symbol in symbols %}
+                    <option> {{ symbol['symbol'] }} </option>
+                    {% endfor %}
+                </select>
+                <select id="frequency" name="frequency">
+                    {% for frequency in frequencies %}
+                    <option> {{ frequency['frequency'] }} </option>
+                    {% endfor %}
+                </select>
+                <br/>
+                <label> Dates </label>
+                <input type="test" id="start_date" name="start_date" placeholder="1 Dec, 2017" />
+                <input type="test" id="end_date" name="end_date" placeholder="optional" />
+                <i>format : 1 Dec, 2017 ; now UTC ; 3 hours ago UTC ; 1 min ago UTC ...</i>
+                <br/>
+                <label> Hours </label>
+                <input type="test" id="hour_start" name="hour_start" placeholder="01:00 AM GMT" />
+                <input type="test" id="hour_end" name="hour_end" placeholder="03:00 PM GMT" />
+                <i>format : 08:00 AM GMT ; 10:00 PM GMT ...</i>
+    
+                <br/>
+
+                <input type="submit" name="display" value="display"/>
+            </form>
+
+        </div>
+        
+
+        <!-- This chart "chart_custom" should use the parameters entered by the user -->
+        <div id="chart_custom"></div>
+
+        <div id="trades"></div>
+
+
+
+
+
+        <h2>Analysis</h2>
+
+        <!-- This part is independent from the above.
+        We are going to focus on the market data analysis
+        
+        First, we need to do be able to filters the universe of cryptocurrencies we are going to analyse
+        For the filters, user should be able to 
+        (1) Select the last 24H volume and determine a minimum volume
+        (2) Select the Market Cap and determine a minimum
+        (3) Select only the pairs against BTC, or ETH, or USDT, or BNB
+        (4) if no filters is selected then we will consider all the cryptocurrency pairs available... -->
+        <h3> Filter </h3>
+        <div id="Filter">
+            <input type="checkbox" />
+            <label> Volume 24H </label>
+            <input type="test" id="Volume_24H" name="Volume_24H" placeholder="min volume" />
+            <div>
+                <input type="checkbox" />
+                <label> Market Cap </label>
+                <input type="test" id="Mkt_cap" name="Mkt_cap" placeholder="min market cap" />
+            </div>
+        </div>
+
+
+        
+        <!-- Second, with the filter we should have reduced the number of cryptocurrency pairs to analyse
+            Now we want to be able to select using tick box the financial analysis indicators:
+            (1) Cumulative Money Flow Line - Function : ad
+            (2) Chaikin Oscillator - Function : adosc
+            (3) BollingerBands - Function : bbands
+            (4) Power of buyers vs sellers - Function : bop
+            (5) Double Exponential Moving Average - Function : dema
+            (6) DirectionalIndicator - Function : di
+            (7) DirectionalMovement - Function : dm
+            (8) Exponential Moving Average - Function : ema
+            (9) GeneralizedEMA - Function : gdema
+            (10) Jaufman Adaptive Moving Average - Function : kama
+            (11) Moving Average Convergence Divergence - Function : macd
+            (12) Mean Absolute Deviation - Function : mad
+            (13) Mesa Adaptive Moving Average - Function : mama
+            (14) Money Flow Indicator - Function : mfi
+            (15) Minus Directional Indicator - Function : minus_di
+            (16) Minus Directional Movement - Function : minus_dm
+            (17) Momentum - Function : mom
+            (18) On Balance Volume - Function : obv
+            (19) Plus Directional Indicator - Function : plus_di
+            (20) Plus Directional Movement - Function : plus_dm
+            (21) Percentage Price Oscillator - ppo
+            (22) Percentage Price Oscillator Fast - Function : ppofast
+            (23) Rate of Change - Function : roc
+            (24) Rate of change percentage - Function : rocp
+            (25) Rate of change ratio - Function : rocr
+            (26) Rate of change ratio 100 - Function : rocr100
+            (27) Relative Strength Index - Function : rsi
+            (28) Stop and Reverse - Function : sar
+            (29) Stop and Reverse Number 2 - Function : sarext
+            (30) Simple Moving Average - Function : sma
+            (31) Snoothed Accumulation - Function : smacc
+            (32) Smoothed Moving Average - Function : smma
+            (33) Standard Deviation - Function : stddev
+            (34) Standard Deviation Sample - Function : stddev_s
+            (35) Stochastic - Function : stochastic
+            (36) Stochastic Fast - Function : stochf
+            (37) Stochastic RSI - Function : stochrsi
+            (38) Triple Exponential Moving Average - Function : tema
+            (39) Triangular Moving Average - Function : trima
+            (40) Trix - Function : trix
+            (41) Time Series Forecast - Function : tsf
+            (42) Ultimate Oscillator - Function : ultimateoscillator
+            (43) Variance - Function : var
+            (44) Variance Sample - Function : var_s
+            (45) Weighted Moving Average - Function : wma
+
+            (46) volume
+            (47) prices
+
+            https://btalib.backtrader.com/indalpha/
+            
+            -> Next to each of them there should be a tick box to show the indicator on a graph or not.
+            We can tick the box if we want to plot the financial indicator (show it on a graph on the dashboard).
+            If we don't tick the box then we just want to show the last value (no graph)
+
+            -> We also want to be able to download the indicators in csv format
+
+        So, on the reduced list of cryptocurrency pairs that we obtained after filtering, we want to compute and show all the indicator we selected in this part. If the tick box for the chart is selected, then we should display the financial indicator in a chart, so we can see how the indicator evolved for the past 30minutes, 1day, 10days,...
+        
+        .. -->
+        
+            <!-- Same thing as with the first chart, we want to select the dataset timeframe
+                we want to be able to chose the dates, time
+            Then we want to be able to download the dataset -->
+
+        <h3> Algo Criteria </h3>
+        <div id="Criteria">
+            <input type="checkbox" />
+            <label> RSI </label>
+            <input type="test" id="rsi_length" name="rsi_length" placeholder="14" />
+            <div>
+                <input type="checkbox" />
+                <label> MACD </label>
+                <input type="test" id="MACD" name="MACD" placeholder="min MACD" />
+            </div>
+            <div>
+                <input type="checkbox" />
+                <label> Criteria 3 </label>
+                <input type="test" id="Criteria_3" name="Criteria_3" placeholder="min criteria 3" />
+            </div>
+        </div>
+
+        
+
+        <div style="border: solid gray 1px; padding: 20px; width: 600px; margin-top: 20px;">
+            <h3> Run Algo </h3>
+            <input type="submit" name="buy" value="Run"/>
+            <p> Results </p>
+            <!-- Il faut ajouter les resultat de l'algo ici -->
+        </div>
+
+
+            <!-- Au lieu de symbol il faudra mettre les resultat de l'algo
+            Le graphic doit aussi contenir les volumes -->
+        <h3> Results Graph </h3>
+        <div id="Result_graph">
+            <select id="symbol_algo" name="symbol_algo">
+                {% for symbol in symbols %}
+                <option> {{ symbol['symbol'] }} </option>
+                {% endfor %}
+            </select>
+            <select id="period" name="period">
+                {% for period in periods %}
+                <option> {{ period['period'] }} </option>
+                {% endfor %}
+            </select>
+        </div>
+        <p></p>
+        <div id="chart_algo"></div>
+        <p> write something here </p>
+
+
+        <div style="border: solid gray 1px; padding: 20px; width: 600px; margin-top: 20px;">
+            <h3> Buy Crypto </h3>
+            
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div style="padding: 10px; margin-bottom: 10px; background: pink; border: solid red 1px; color: red;">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+
+            <form action="/buy" method="post">
+                <input type="text" id="quantity" name="quantity" placeholder="eg.0.001"/>
+                    <select id="symbol" name="symbol">
+                        {% for symbol in symbols %}
+                        <option> {{ symbol['symbol'] }} </option>
+                        {% endfor %}
+                    </select>
+                <input type="submit" name="buy" value="buy"/>
+            </form>
+        </div>
+
+
+        <div id="my_balances">
+            <h2>Balances</h2>
+                <!-- could do {{ my_balances }} but it's not well organised -->
+            <table>
+                {% for balance in my_balances%}
+                <tr> 
+                <!-- for a new row use tr-->
+                    <td>
+                        {{ balance['asset'] }}
+                    </td>
+                    <!-- for a new column use td  -->
+                    <td>
+                        {{ balance['free']}}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+
+        <script src="{{ url_for('static', filename='chart_algo.js') }}"></script>
+        <script src="{{ url_for('static', filename='chart_custom.js') }}"></script>
+
+    </body>
+
+</html>
